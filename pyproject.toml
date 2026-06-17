@@ -32,8 +32,8 @@ palette = ["pillow", "scikit-learn"]
 webapp = ["streamlit", "pillow", "scikit-learn"]
 
 [project.urls]
-"Homepage" = "https://github.com/theamusing/perfectPixel"
-"Web Demo" = "https://github.com/theamusing/perfectPixel_webdemo"
+"Homepage" = "https://github.com/ParrotG/perfectPixel-paletteQuantize"
+"Upstream" = "https://github.com/theamusing/perfectPixel"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

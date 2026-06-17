@@ -1,15 +1,17 @@
-# Perfect Pixel
+# Perfect Pixel Palette Quantize
 
-> **Auto detect and Get perfect Pixel art**
+> **Auto-detect pixel grids and clean up pixel-art palettes**
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-<img src="https://github.com/theamusing/perfectPixel/raw/main/assets/process.png" width="100%" />
+<img src="assets/process.png" width="100%" />
 
 Standard scaling often fails to sample AI-generated pixel art due to inconsistent sizes and non-square grids. 
 
-This tool automatically detects the optimal grid and delivers perfectly aligned, pixel-perfect results.
+This fork extends the original [theamusing/perfectPixel](https://github.com/theamusing/perfectPixel) project with palette quantization, palette extraction, palette remapping, and a Streamlit web app. The pixel-alignment algorithm is credited to the upstream Perfect Pixel project.
+
+This tool automatically detects the optimal grid and delivers perfectly aligned, pixel-perfect results. It can also simplify noisy AI-generated color ramps into a cleaner, more editable pixel-art palette.
 
 ## Features
 - Automatically detect grid size from pixel style images.
@@ -19,7 +21,9 @@ This tool automatically detects the optimal grid and delivers perfectly aligned,
 - Includes a simple Streamlit web app for the full pixel alignment + palette workflow.
 - Easy to integrate into your own workflow.
 
-[Try the Web Demo](https://theamusing.github.io/perfectPixel_webdemo/)
+Repository: [ParrotG/perfectPixel-paletteQuantize](https://github.com/ParrotG/perfectPixel-paletteQuantize)
+
+Original pixel-alignment demo: [theamusing.github.io/perfectPixel_webdemo](https://theamusing.github.io/perfectPixel_webdemo/)
 
 ## Installation
 
@@ -90,7 +94,7 @@ For example, I used ChatGPT to transfer an image into pixel style.
 prompt: Convert the input image into a TRUE perler bead pixel pattern designed for physical bead crafting, not digital illustration. Canvas size must be exactly 32×32 pixels OR 16×16 pixels, where each pixel represents exactly one perler bead. Use extremely large, chunky pixels with very few active pixels overall. Simplicity is critical. Only keep the main subject. Remove the entire background. For human characters, make sure the face is flat and no shadow. The subject must be centered with clear empty bead rows around all edges to allow easy mounting on a bead board. Add a clean, continuous dark outline around the subject so the silhouette is clearly readable when made with beads. Use a very limited solid color palette (maximum 6–8 colors total). No gradients, no shading, no lighting, no dithering, no texture. No anti-aliasing or smoothing — every pixel must be a perfect square bead aligned to the grid. The output image should be pixel-perfect, each grid only contains one color. Background must be pure solid white.
 ```
 
-<img src="https://github.com/theamusing/perfectPixel/raw/main/assets/generated.png" width="50%" />
+<img src="assets/generated.png" width="50%" />
 
 The image is in pixel style but the grids are distorted. Also we don't know the number of grids.
 
@@ -106,7 +110,7 @@ rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
 w, h, out = get_perfect_pixel(rgb)
 ```
 
-<img src="https://github.com/theamusing/perfectPixel/raw/main/assets/refined2.png" width="50%" />
+<img src="assets/refined2.png" width="50%" />
 
 *Also see [example.py](./example.py).*
 ```bash
@@ -115,7 +119,7 @@ python example.py
 
 The grid size is automatically detected, and the image is refined.
 
-<img src="https://github.com/theamusing/perfectPixel/raw/main/assets/process2.png" width="100%" />
+<img src="assets/process2.png" width="100%" />
 
 ### Step 3: Clean up the color palette
 
@@ -123,7 +127,7 @@ AI-generated pixel art often has another problem after grid alignment: the color
 
 Perfect Palette adds a color quantization step on top of Perfect Pixel. It extracts the image palette, converts unique colors to CIE Lab space, and uses Euclidean-distance-based `AgglomerativeClustering` with complete linkage to automatically merge visually similar colors.
 
-<img src="https://github.com/theamusing/perfectPixel/raw/main/assets/palette_quantize_demo.jpg" width="100%" />
+<img src="assets/palette_quantize_demo.jpg" width="100%" />
 
 This is useful when you do not want to manually choose a fixed number of colors. Instead, you tune a merge distance: nearby colors are merged, while low-frequency but artistically important accent colors can remain intact.
 
@@ -207,7 +211,7 @@ Try integrating it into your own projects!
 
 ## Algorithm
 
-<img src="https://github.com/theamusing/perfectPixel/raw/main/assets/algorithm.png" width="100%" />
+<img src="assets/algorithm.png" width="100%" />
 
 The whole algorithm mainly contains 3 steps:
 1. Detect grid size from FFT magnitude of the original image and generate grids.
@@ -225,9 +229,12 @@ This differs from common color quantizers such as `Pillow.Image.quantize`, which
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=theamusing/perfectPixel&type=date&legend=top-left)](https://www.star-history.com/#theamusing/perfectPixel&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=ParrotG/perfectPixel-paletteQuantize&type=date&legend=top-left)](https://www.star-history.com/#ParrotG/perfectPixel-paletteQuantize&type=date&legend=top-left)
+
+## Attribution
+
+This project is released under the MIT License. The pixel-alignment algorithm is credited to [theamusing/perfectPixel](https://github.com/theamusing/perfectPixel), which is also released under the MIT License.
 
 Thanks so much!
-
 
 

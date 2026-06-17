@@ -235,6 +235,27 @@ def calibrate_colors(
     return quantized.convert("RGB"), None
 
 
+def show_footer() -> None:
+    st.markdown(
+        """
+        <div style="
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(49, 51, 63, 0.16);
+            color: rgba(49, 51, 63, 0.72);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        ">
+            Released under the MIT License. Pixel-alignment algorithm credited to
+            <a href="https://github.com/theamusing/perfectPixel" target="_blank" rel="noopener noreferrer">
+                theamusing/perfectPixel
+            </a>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def main() -> None:
     st.set_page_config(page_title="Perfect Pixel Palette Workflow", layout="wide")
     inject_upload_surface_css(st.session_state.get("source_image"))
@@ -415,6 +436,8 @@ def main() -> None:
                 st.caption(f"Using uploaded target palette. Preview colors: {len(result['after_palette'])}")
             else:
                 st.caption(f"Auto-merged preview colors: {len(result['after_palette'])}")
+
+    show_footer()
 
 
 if __name__ == "__main__":
