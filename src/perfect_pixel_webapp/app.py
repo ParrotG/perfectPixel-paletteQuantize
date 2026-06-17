@@ -67,14 +67,14 @@ def inject_upload_surface_css(source_image: Optional[Image.Image]) -> None:
         background_size = "72px 72px"
         aspect_ratio = "1 / 1"
         min_height = "320px"
-        hint_text = "点击上传原图"
+        hint_text = "Click to upload source image"
         hint_display = "block"
     else:
         background_uri = image_to_data_uri(source_image)
         background_size = "contain"
         aspect_ratio = f"{source_image.width} / {source_image.height}"
         min_height = "0"
-        hint_text = "点击图片重新上传"
+        hint_text = "Click image to replace"
         hint_display = "block"
 
     st.markdown(
@@ -241,30 +241,30 @@ def main() -> None:
     st.title("Perfect Pixel Palette Workflow")
 
     with st.sidebar:
-        st.header("输入")
+        st.header("Input")
         palette_upload = st.file_uploader(
-            "上传限定色谱图片（可选）",
+            "Upload target palette image (optional)",
             type=("png", "jpg", "jpeg", "webp"),
         )
 
-        st.header("像素对齐")
+        st.header("Pixel Alignment")
         sample_method = st.selectbox(
-            "Sample 策略",
+            "Sampling method",
             options=("center", "median", "majority"),
             index=0,
         )
         refine_intensity = st.slider(
-            "网格线修正强度",
+            "Grid refinement intensity",
             min_value=0.0,
             max_value=0.5,
             value=0.3,
             step=0.05,
         )
-        fix_square = st.checkbox("接近正方形时自动修正尺寸", value=True)
+        fix_square = st.checkbox("Auto-fix near-square output size", value=True)
 
-        st.header("色彩校准")
+        st.header("Color Calibration")
         distance_threshold = st.slider(
-            "Lab 颜色合并阈值",
+            "Lab color merge threshold",
             min_value=0.0,
             max_value=50.0,
             value=15.0,
@@ -272,14 +272,14 @@ def main() -> None:
             disabled=palette_upload is not None,
         )
         color_space = st.radio(
-            "限定色谱最近邻空间",
+            "Nearest-color space for target palette",
             options=("lab", "rgb"),
             index=0,
             disabled=palette_upload is None,
             horizontal=True,
         )
         max_palette_preview = st.slider(
-            "色谱预览最大颜色数",
+            "Maximum colors in palette preview",
             min_value=8,
             max_value=256,
             value=128,
@@ -290,13 +290,13 @@ def main() -> None:
 
     original_col, result_col = st.columns(2)
     with original_col:
-        st.subheader("原图")
+        st.subheader("Source Image")
         source_image = None
         source_upload = None
 
         with st.container(key="source_upload_surface"):
             source_upload = st.file_uploader(
-                "上传或替换原图",
+                "Upload or replace source image",
                 type=("png", "jpg", "jpeg", "webp"),
                 key="source_upload",
                 label_visibility="collapsed",
@@ -316,14 +316,14 @@ def main() -> None:
             source_image = st.session_state.get("source_image")
 
         process_clicked = st.button(
-            "启动处理",
+            "Run Processing",
             type="primary",
             disabled=source_image is None,
             use_container_width=True,
         )
 
     if process_clicked and source_image is not None:
-        with st.spinner("正在进行像素对齐和色彩校准..."):
+        with st.spinner("Running pixel alignment and color calibration..."):
             aligned_width, aligned_height, aligned_image = align_pixels(
                 image=source_image,
                 sample_method=sample_method,
@@ -361,9 +361,9 @@ def main() -> None:
 
     result = st.session_state.get("workflow_result")
     with result_col:
-        st.subheader("处理后图")
+        st.subheader("Processed Image")
         if result is None:
-            st.caption("点击“启动处理”后显示结果。")
+            st.caption("Run processing to show the result.")
         else:
             processed_image = result["processed_image"]
             preview_image = resize_nearest(processed_image, result["source_size"])
@@ -371,10 +371,10 @@ def main() -> None:
             width, height = result["aligned_size"]
             preview_width, preview_height = result["source_size"]
             st.caption(
-                f"输出网格尺寸：{width} x {height}；预览尺寸：{preview_width} x {preview_height}"
+                f"Output grid size: {width} x {height}; preview size: {preview_width} x {preview_height}"
             )
             st.download_button(
-                "下载处理后图片",
+                "Download Processed Image",
                 data=image_to_png_bytes(processed_image),
                 file_name="perfect_pixel_palette.png",
                 mime="image/png",
@@ -384,18 +384,18 @@ def main() -> None:
     st.divider()
     palette_before_col, palette_after_col = st.columns(2)
     with palette_before_col:
-        st.subheader("处理前色谱")
+        st.subheader("Palette Before Processing")
         if result is None:
-            st.caption("点击“启动处理”后显示像素对齐后的色谱。")
+            st.caption("Run processing to show the palette after pixel alignment.")
         else:
             st.image(
                 palette_to_swatch_image(result["before_palette"]),
                 use_container_width=False,
             )
-            st.caption(f"预览颜色数：{len(result['before_palette'])}")
+            st.caption(f"Preview colors: {len(result['before_palette'])}")
 
     with palette_after_col:
-        st.subheader("处理后色谱")
+        st.subheader("Palette After Processing")
         if result is None:
             if palette_image is not None:
                 preview_palette, _ = extract_palette(
@@ -403,18 +403,18 @@ def main() -> None:
                     max_colors=max_palette_preview,
                 )
                 st.image(palette_to_swatch_image(preview_palette), use_container_width=False)
-                st.caption("已上传限定色谱，点击处理后将用于最近邻映射。")
+                st.caption("Target palette uploaded. It will be used for nearest-color mapping.")
             else:
-                st.caption("未上传限定色谱时，将显示自动合并后的输出色谱。")
+                st.caption("Without a target palette, the auto-merged output palette will appear here.")
         else:
             st.image(
                 palette_to_swatch_image(result["after_palette"]),
                 use_container_width=False,
             )
             if result["used_uploaded_palette"]:
-                st.caption(f"使用上传限定色谱，预览颜色数：{len(result['after_palette'])}")
+                st.caption(f"Using uploaded target palette. Preview colors: {len(result['after_palette'])}")
             else:
-                st.caption(f"自动合并后预览颜色数：{len(result['after_palette'])}")
+                st.caption(f"Auto-merged preview colors: {len(result['after_palette'])}")
 
 
 if __name__ == "__main__":
