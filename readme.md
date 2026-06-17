@@ -209,28 +209,6 @@ Try integrating it into your own projects!
 
 `palette` can be a NumPy RGB array, RGB tuples/lists, or hex strings such as `"#ffcc00"`.
 
-## Algorithm
-
-<img src="assets/algorithm.png" width="100%" />
-
-The whole algorithm mainly contains 3 steps:
-1. Detect grid size from FFT magnitude of the original image and generate grids.
-2. Detect edges using Sobel and refine the grids by aligning them to edges.
-3. Use the grids to sample the original image and to get the scaled image.
-
-The color cleanup workflow adds an optional palette stage after grid alignment:
-
-1. Extract unique RGB colors from the pixel-aligned image.
-2. Convert those colors to CIE Lab space.
-3. Merge nearby colors using complete-linkage agglomerative clustering with a configurable Lab distance threshold.
-4. Replace each source color with the medoid color of its cluster.
-
-This differs from common color quantizers such as `Pillow.Image.quantize`, which are usually designed for natural images and often try to preserve continuous gradients while discarding low-frequency colors. Pixel art has different needs: a rare accent color may be more important than a common gradient transition. Complete-linkage agglomerative clustering makes it possible to merge colors only within a chosen perceptual range, preserve outlier accent colors, and avoid manually specifying a fixed number of colors.
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=ParrotG/perfectPixel-paletteQuantize&type=date&legend=top-left)](https://www.star-history.com/#ParrotG/perfectPixel-paletteQuantize&type=date&legend=top-left)
-
 ## Attribution
 
 This project is released under the MIT License. The pixel-alignment algorithm is credited to [theamusing/perfectPixel](https://github.com/theamusing/perfectPixel), which is also released under the MIT License.
