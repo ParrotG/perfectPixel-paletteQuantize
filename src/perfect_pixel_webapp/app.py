@@ -12,6 +12,7 @@ from PIL import Image
 SRC_DIR = Path(__file__).resolve().parents[1]
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
+ASSETS_DIR = SRC_DIR.parent / "assets"
 
 from perfect_palette import extract_palette, map_image_to_palette, normalize_palette
 from perfect_palette.color_quantize import simplify_colors_by_lab_threshold_image
@@ -47,6 +48,103 @@ def show_pixelated_image(image: Image.Image) -> None:
     )
 
 
+def bytes_to_data_uri(data: bytes, mime: str) -> str:
+    encoded = base64.b64encode(data).decode("ascii")
+    return f"data:{mime};base64,{encoded}"
+
+
+def image_to_data_uri(image: Image.Image) -> str:
+    return bytes_to_data_uri(image_to_png_bytes(image), "image/png")
+
+
+def asset_to_data_uri(path: Path, mime: str) -> str:
+    return bytes_to_data_uri(path.read_bytes(), mime)
+
+
+def inject_upload_surface_css(source_image: Optional[Image.Image]) -> None:
+    if source_image is None:
+        background_uri = asset_to_data_uri(ASSETS_DIR / "upload.svg", "image/svg+xml")
+        background_size = "72px 72px"
+        aspect_ratio = "1 / 1"
+        min_height = "320px"
+        hint_text = "点击上传原图"
+        hint_display = "block"
+    else:
+        background_uri = image_to_data_uri(source_image)
+        background_size = "contain"
+        aspect_ratio = f"{source_image.width} / {source_image.height}"
+        min_height = "0"
+        hint_text = "点击图片重新上传"
+        hint_display = "block"
+
+    st.markdown(
+        f"""
+        <style>
+        .st-key-source_upload_surface [data-testid="stFileUploaderDropzone"] {{
+            min-height: {min_height};
+            aspect-ratio: {aspect_ratio};
+            position: relative;
+            overflow: hidden;
+            border: 1px dashed rgba(49, 51, 63, 0.35);
+            border-radius: 8px;
+            background-color: rgba(250, 250, 250, 0.75);
+            background-image: url("{background_uri}");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: {background_size};
+            cursor: pointer;
+        }}
+
+        .st-key-source_upload_surface [data-testid="stFileUploaderDropzone"]:hover {{
+            border-color: rgb(255, 75, 75);
+            background-color: rgba(255, 255, 255, 0.92);
+        }}
+
+        .st-key-source_upload_surface [data-testid="stFileUploaderDropzone"] > div {{
+            opacity: 0;
+        }}
+
+        .st-key-source_upload_surface [data-testid="stFileUploaderDropzone"]::after {{
+            content: "{hint_text}";
+            display: {hint_display};
+            position: absolute;
+            left: 50%;
+            bottom: 1rem;
+            transform: translateX(-50%);
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.88);
+            color: rgba(49, 51, 63, 0.82);
+            font-size: 0.875rem;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
+        }}
+
+        .st-key-source_upload_surface [data-testid="stFileUploader"] small {{
+            display: none;
+        }}
+
+        .st-key-source_upload_surface [data-testid="stFileUploaderFile"] {{
+            display: none;
+        }}
+
+        .st-key-source_upload_surface [data-testid="stFileUploaderDeleteBtn"] {{
+            display: none;
+        }}
+
+        .source-upload-placeholder {{
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 320px;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def uploaded_image_to_rgb(uploaded_file) -> Image.Image:
     return Image.open(uploaded_file).convert("RGB")
 
@@ -58,6 +156,13 @@ def image_bytes_to_rgb(image_bytes: bytes) -> Image.Image:
 def uploaded_file_key(uploaded_file, file_bytes: bytes) -> Tuple[str, int, str]:
     digest = hashlib.sha256(file_bytes).hexdigest()
     return uploaded_file.name, len(file_bytes), digest
+
+
+def rerun_app() -> None:
+    if hasattr(st, "rerun"):
+        st.rerun()
+    else:
+        st.experimental_rerun()
 
 
 def palette_to_swatch_image(
@@ -132,6 +237,7 @@ def calibrate_colors(
 
 def main() -> None:
     st.set_page_config(page_title="Perfect Pixel Palette Workflow", layout="wide")
+    inject_upload_surface_css(st.session_state.get("source_image"))
     st.title("Perfect Pixel Palette Workflow")
 
     with st.sidebar:
@@ -185,26 +291,29 @@ def main() -> None:
     original_col, result_col = st.columns(2)
     with original_col:
         st.subheader("原图")
-        source_upload = st.file_uploader(
-            "点击上传原图，或重新上传替换当前原图",
-            type=("png", "jpg", "jpeg", "webp"),
-            key="source_upload",
-        )
-
         source_image = None
-        if source_upload is None:
-            if st.session_state.get("source_upload_key") is not None:
-                st.session_state.pop("source_upload_key", None)
-                st.session_state.pop("workflow_result", None)
-            st.caption("尚未上传原图。请在此处上传一张待处理图片。")
-        else:
+        source_upload = None
+
+        with st.container(key="source_upload_surface"):
+            source_upload = st.file_uploader(
+                "上传或替换原图",
+                type=("png", "jpg", "jpeg", "webp"),
+                key="source_upload",
+                label_visibility="collapsed",
+            )
+
+        if source_upload is not None:
             source_bytes = source_upload.getvalue()
             source_key = uploaded_file_key(source_upload, source_bytes)
             if st.session_state.get("source_upload_key") != source_key:
                 st.session_state["source_upload_key"] = source_key
                 st.session_state.pop("workflow_result", None)
+                st.session_state["source_image"] = image_bytes_to_rgb(source_bytes)
+                rerun_app()
             source_image = image_bytes_to_rgb(source_bytes)
-            st.image(source_image, use_container_width=True)
+            st.session_state["source_image"] = source_image
+        else:
+            source_image = st.session_state.get("source_image")
 
         process_clicked = st.button(
             "启动处理",
