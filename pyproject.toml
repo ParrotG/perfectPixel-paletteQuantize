@@ -28,6 +28,8 @@ classifiers = [
 [project.optional-dependencies]
 # pip install "perfect-pixel[opencv]"
 opencv = ["opencv-python"]
+palette = ["pillow", "scikit-learn"]
+webapp = ["streamlit", "pillow", "scikit-learn"]
 
 [project.urls]
 "Homepage" = "https://github.com/theamusing/perfectPixel"
@@ -38,7 +40,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["perfect_pixel*"]
+include = ["perfect_pixel*", "perfect_palette*", "perfect_pixel_webapp*"]
 
 [tool.setuptools.package-data]
 # None

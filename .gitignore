@@ -6,6 +6,7 @@ dist/
 venv/
 .venv/
 env/
+*__pycache__/
 
 output/
 

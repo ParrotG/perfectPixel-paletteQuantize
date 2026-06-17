@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Union
 
 import numpy as np
 from PIL import Image
@@ -71,7 +72,41 @@ def simplify_colors_by_lab_threshold(
             Smaller values preserve more colors.
     """
     image = Image.open(input_path).convert("RGBA")
-    rgba = np.asarray(image, dtype=np.uint8)
+    output = simplify_colors_by_lab_threshold_image(
+        image=image,
+        distance_threshold=distance_threshold,
+    )
+    output.save(output_path)
+
+
+def simplify_colors_by_lab_threshold_image(
+    image: Union[Image.Image, np.ndarray],
+    distance_threshold: float = 2.5,
+) -> Image.Image:
+    """
+    Simplify visually similar colors in an in-memory image.
+
+    Args:
+        image: PIL image or RGB/RGBA numpy array.
+        distance_threshold: Maximum Lab-space distance threshold for merging clusters.
+            Smaller values preserve more colors.
+
+    Returns:
+        Processed RGB image.
+    """
+    if isinstance(image, Image.Image):
+        rgba = np.asarray(image.convert("RGBA"), dtype=np.uint8)
+    else:
+        arr = np.asarray(image)
+        if arr.ndim != 3 or arr.shape[-1] not in (3, 4):
+            raise ValueError("Image must have shape (H, W, 3) or (H, W, 4).")
+        if arr.dtype != np.uint8:
+            arr = np.clip(np.rint(arr), 0, 255).astype(np.uint8)
+        if arr.shape[-1] == 3:
+            alpha = np.full(arr.shape[:2] + (1,), 255, dtype=np.uint8)
+            rgba = np.concatenate([arr, alpha], axis=2)
+        else:
+            rgba = arr
 
     rgb = rgba[:, :, :3]
     flat_rgb = rgb.reshape(-1, 3)
@@ -104,8 +139,7 @@ def simplify_colors_by_lab_threshold(
     mapped_flat_rgb = simplified_rgb[inverse]
     mapped_rgb = mapped_flat_rgb.reshape(rgb.shape)
 
-    output = Image.fromarray(mapped_rgb, mode="RGB")
-    output.save(output_path)
+    return Image.fromarray(mapped_rgb, mode="RGB")
 
 
 if __name__ == "__main__":
